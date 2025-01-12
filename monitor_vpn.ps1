@@ -1,5 +1,5 @@
 $vpnName = "VPN"  # Replace with your VPN connection name
-$networkAdapterName = ""  # Replace with the name of the network adapter you want to disable or it will disable the first one listed in Get-NetAdapter
+$networkAdapterName = ""  # Replace with the name of the network adapter you want to disable or it will disable the first one listed in Get-NetAdapter that is up
 
 # Check if running as admin for disabling Network adapter
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
