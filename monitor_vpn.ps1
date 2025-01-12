@@ -1,4 +1,5 @@
-$vpnName = "PureVPN - LA"  # Replace with your VPN connection name
+$vpnName = "VPN"  # Replace with your VPN connection name
+$networkAdapterName = ""  # Replace with the name of the network adapter you want to disable or it will disable the first one listed in Get-NetAdapter
 
 # Check if running as admin for disabling Network adapter
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -57,10 +58,17 @@ try {
             if ($reconnectAttempts -ge 5) {
                 Write-Host "All reconnection attempts failed."
                 if ($hasAdminRights) {
-                    $networkAdapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+                    
+                    if (-not $networkAdapterName) { 
+                        $networkAdapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+                    }
+                    
                     if ($networkAdapter) {
                         Disable-NetAdapter -Name $networkAdapter.Name -Confirm:$false
                         Write-Host "Network adapter $($networkAdapter.Name) has been disabled."
+                        exit
+                    } else {
+                        Write-Host "No network adapters found."
                         exit
                     }
                 } else {
