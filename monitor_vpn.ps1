@@ -1,5 +1,6 @@
 $vpnName = "VPN"  # Replace with your VPN connection name
 $networkAdapterName = ""  # Replace with the name of the network adapter you want to disable or it will disable the first one listed in Get-NetAdapter that is up
+$retryAttempts = 5  # Number of retry reconnection attempts to the VPN
 
 # Check if running as admin for disabling Network adapter
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -43,7 +44,7 @@ try {
         } else {
             Write-Host "$vpnName disconnected. Attempting to reconnect..."
             $reconnectAttempts = 0
-            while ($reconnectAttempts -lt 5) {
+            while ($reconnectAttempts -lt $retryAttempts) {
                 Connect-VPN
                 if (-not (Check-VPN)) {
                     $reconnectAttempts++
@@ -55,20 +56,21 @@ try {
                 }
             }
 
-            if ($reconnectAttempts -ge 5) {
+            if ($reconnectAttempts -ge $retryAttempts) {
                 Write-Host "All reconnection attempts failed."
                 if ($hasAdminRights) {
                     
                     if (-not $networkAdapterName) { 
                         $networkAdapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" }
+                        $networkAdapterName = $networkAdapter.Name
                     }
                     
-                    if ($networkAdapter) {
-                        Disable-NetAdapter -Name $networkAdapter.Name -Confirm:$false
-                        Write-Host "Network adapter $($networkAdapter.Name) has been disabled."
+                    if ($networkAdapterName -and (Get-NetAdapter -Name $networkAdapterName -ErrorAction SilentlyContinue)) {
+                        Disable-NetAdapter -Name $networkAdapterName -Confirm:$false
+                        Write-Host "Network adapter '$networkAdapterName' has been disabled."
                         exit
                     } else {
-                        Write-Host "No network adapters found."
+                        Write-Host "No network adapter '$networkAdapterName' found."
                         exit
                     }
                 } else {
